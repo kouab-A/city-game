@@ -34,23 +34,31 @@ export function useStock(user: User | null) {
       }
 
       if (stats && isMounted) {
+        // 固定設定
+        const currentMax = 15;
+        setMaxStock(currentMax);
+
         // 経過時間による回復分を計算
         const lastTime = new Date(stats.last_placed_at).getTime();
         const now = Date.now();
         const elapsedSeconds = (now - lastTime) / 1000;
         
-        const currentCooldown = settings?.cooldown_seconds || 5;
-        const currentMax = settings?.max_stock_limit || 100;
+        // 3秒ごとに0.1回復 = 1秒あたり (0.1 / 3) 回復
+        const recovered = (elapsedSeconds / 3) * 0.1;
         
-        const recovered = Math.floor(elapsedSeconds / currentCooldown);
-        const currentCalculatedStock = Math.min(currentMax, stats.current_stock + recovered);
+        let currentCalculatedStock = Math.min(currentMax, stats.current_stock + recovered);
+        // 小数第1位で丸める
+        currentCalculatedStock = Math.round(currentCalculatedStock * 10) / 10;
         
         setStock(currentCalculatedStock);
 
-        // クライアント側での自動回復タイマー
+        // クライアント側での自動回復タイマー（3秒ごとに0.1追加）
         timer = setInterval(() => {
-          setStock((prev) => (prev < currentMax ? prev + 1 : prev));
-        }, currentCooldown * 1000);
+          setStock((prev) => {
+            const next = prev + 0.1;
+            return next >= currentMax ? currentMax : Math.round(next * 10) / 10;
+          });
+        }, 3000);
       }
     };
 

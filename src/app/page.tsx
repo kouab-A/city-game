@@ -54,7 +54,7 @@ export default function GamePage() {
             <div className="bg-gray-900/50 px-4 py-2 rounded-lg border border-gray-700/50 shadow-inner min-w-[200px]">
               <div className="flex justify-between items-end mb-1">
                 <span className="text-xs text-gray-400 font-bold">資材ストック</span>
-                <span className="text-sm font-mono text-blue-400">{stock} / {maxStock}</span>
+                <span className="text-sm font-mono text-blue-400">{stock.toFixed(1)} / {maxStock}</span>
               </div>
               <div className="w-full h-2.5 bg-gray-800 rounded-full overflow-hidden shadow-inner border border-gray-700">
                 <div 
