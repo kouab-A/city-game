@@ -14,20 +14,13 @@ export function useStock(user: User | null) {
     let timer: NodeJS.Timeout;
 
     const fetchSettingsAndStats = async () => {
-      // 設定値の取得
-      const { data: settings } = await supabase.from('game_settings').select('*').single();
-      if (settings && isMounted) {
-        setMaxStock(settings.max_stock_limit);
-        setCooldown(settings.cooldown_seconds);
-      }
-
       // ユーザーのストック情報を取得または作成
       let { data: stats } = await supabase.from('user_stats').select('*').eq('user_id', user.id).single();
       
       if (!stats && isMounted) {
         const { data: newStats } = await supabase.from('user_stats').insert({
           user_id: user.id,
-          current_stock: settings?.max_stock_limit || 100,
+          current_stock: 15,
           last_placed_at: new Date().toISOString()
         }).select().single();
         stats = newStats;

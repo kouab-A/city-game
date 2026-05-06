@@ -1,12 +1,31 @@
 'use client';
 
 import { useAuth } from '@/hooks/useAuth';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 
 export default function LoginPage() {
   const { user, isAllowed, loading, login, logout } = useAuth();
   const router = useRouter();
+
+  const [requestStatus, setRequestStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  const handleAccessRequest = async () => {
+    if (!user) return;
+    setRequestStatus('loading');
+    const { error } = await supabase.from('access_requests').insert({
+      discord_id: user.user_metadata?.provider_id,
+      username: user.user_metadata?.full_name || 'No Name',
+    });
+    
+    if (error) {
+      console.error(error);
+      setRequestStatus('error');
+    } else {
+      setRequestStatus('success');
+    }
+  };
 
   useEffect(() => {
     if (!loading && user && isAllowed) {
@@ -33,11 +52,30 @@ export default function LoginPage() {
               あなたのDiscordアカウント <br/>
               <span className="font-mono text-gray-400">({user.user_metadata?.full_name || 'No Name'} / ID: {user.user_metadata?.provider_id})</span> <br/>
               はホワイトリストに登録されていません。
-              管理人に連絡してアクセス権をリクエストしてください。
             </p>
+            
+            {requestStatus === 'success' ? (
+              <div className="bg-green-900/40 border border-green-500 text-green-300 p-4 rounded-lg mb-6 text-sm font-bold">
+                申請を送信しました！<br/>管理者の承認をお待ちください。
+              </div>
+            ) : (
+              <div className="mb-6">
+                <button 
+                  onClick={handleAccessRequest}
+                  disabled={requestStatus === 'loading'}
+                  className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg transition-colors text-sm font-bold shadow-lg"
+                >
+                  {requestStatus === 'loading' ? '送信中...' : '管理人に参加申請を送る'}
+                </button>
+                {requestStatus === 'error' && (
+                  <p className="text-red-400 text-xs mt-2">送信に失敗しました。もう一度お試しください。</p>
+                )}
+              </div>
+            )}
+
             <button 
               onClick={logout} 
-              className="px-6 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm font-medium"
+              className="px-6 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-xs font-medium"
             >
               別のアカウントでやり直す
             </button>
