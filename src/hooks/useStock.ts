@@ -15,14 +15,21 @@ export function useStock(user: User | null) {
 
     const fetchSettingsAndStats = async () => {
       // ユーザーのストック情報を取得または作成
-      let { data: stats } = await supabase.from('user_stats').select('*').eq('user_id', user.id).single();
+      let { data: stats, error: selectError } = await supabase.from('user_stats').select('*').eq('user_id', user.id).single();
+      if (selectError) {
+        console.error('user_stats取得エラー:', selectError);
+      }
       
       if (!stats && isMounted) {
-        const { data: newStats } = await supabase.from('user_stats').insert({
+        const { data: newStats, error: insertError } = await supabase.from('user_stats').insert({
           user_id: user.id,
           current_stock: 15,
           last_placed_at: new Date().toISOString()
         }).select().single();
+        
+        if (insertError) {
+          console.error('user_stats作成エラー:', insertError);
+        }
         stats = newStats;
       }
 
